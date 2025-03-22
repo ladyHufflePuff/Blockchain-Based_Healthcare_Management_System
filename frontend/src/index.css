@@ -1,0 +1,571 @@
+/* html, body {
+  overflow: hidden;
+} */
+/* CuraBlock Header */
+header {
+  top: 20px;
+  height: 50px;
+  padding-left: 3dvb;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #ff0008;
+}
+
+.full-page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #2c73ba;
+}
+
+.role-selection{
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+.text-center{
+  margin-bottom: 8vh; 
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.btn-role {
+  width: 150px;
+  padding: 12px 30px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-radius: 5px;
+}
+.patient-portal {
+  display: flex;
+  height: calc(100vh - 50px);
+}
+
+.sidebar {
+  width: 20%;
+  background: #f4f4f4;
+  display: flex;
+  padding: 10px;
+  flex-direction: column;
+}
+
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar button {
+  margin-top: auto;
+  padding: 12px;
+  border: none;
+  text-align: left;
+  background-color: transparent; 
+  overflow: hidden;
+  text-overflow:ellipsis;
+}
+.sidebar button span {
+  display: inline-block;
+  width: 100%;
+}
+.sidebar button.active {
+  background-color: #acb5b2;
+}
+
+.icon-text-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 20px;
+}
+
+.icon-text-wrapper span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-grow: 1;
+}
+
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  border-bottom: 2px solid #161313;
+}
+
+.tab {
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  font-weight: bold;
+  text-align: center;
+  overflow: hidden;
+}
+
+.tab.active {
+  background: #acbfd3;
+}
+
+.dashboard-card {
+  padding: 10px;
+  background: white;
+  margin-bottom: 1px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.clinic, .med-name, .provider-col {
+  flex: 3;
+}
+
+.date, .dosage, .date-col, .action-col, .button-item{
+  flex: 2;
+  text-align: center;
+}
+
+.view-btn {
+  flex: 2;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.details-dropdown {
+  background: #eef3ff;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.details-dropdown p {
+  margin: 5px 0;
+}
+
+.appointment-card {
+  padding: 15px;
+  background: white;
+  margin-bottom: 1px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.doctor-name {
+  font-size: 14px;
+  font-style: italic;
+}
+
+.appointment-details {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+}
+
+.requests-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.appointment-date {
+  font-weight: bold;
+}
+.appointment-time {
+  display: flex;
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  text-align: center; 
+}
+
+.btns {
+  display: flex;
+  gap: 10px;
+  justify-content: center; 
+  margin-top: 10px; 
+}
+
+.btns button {
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.btns button:first-child {
+  background-color: #4CAF50; 
+}
+
+.btns button:last-child {
+  background-color: #f44336;
+}
+
+.status-badge {
+  float: right;
+  margin-right: 15px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+  color: white;
+  min-width: 80px; 
+  text-transform: capitalize;
+  opacity: 0.75;
+  background-color: #2c73ba;
+  text-align: center
+}
+
+.status-badge.paid {
+  background-color: green;
+}
+
+.status-badge.pending {
+  background-color: orange;
+}
+
+.status-badge.unpaid {
+  background-color: red;
+}
+
+.item-header{
+  padding: 10px;
+  background: rgba(147, 145, 145, 0.878);
+  font-weight: bold;
+  display: flex;
+}
+
+.revoke-btn {
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.patient-card {
+  background: rgb(108, 30, 30);
+  padding: 20px;
+  margin: auto;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.profile-section {
+  display: flex;
+  margin-bottom: 15px;
+}
+
+.profile-pic {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ddd;
+}
+
+.patient-name {
+  margin-top: 10px;
+  font-size: 18px;
+  font-weight: bold;
+}
+.details{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  text-align: left;
+  gap: 10px;
+
+}
+.column {
+  flex: 1;
+  padding: 0 10px;
+} 
+.profile-section {
+  display: flex; /* Make the container a flexbox */
+  align-items: center; /* Align the items vertically centered */
+  gap: 15px; /* Space between image and text */
+  margin-bottom: 50px; /* Space below profile section */
+  flex-wrap: wrap; /* Allow items to wrap if the screen is smaller */  overflow: hidden;
+  text-overflow: ellipsis;
+  
+}
+.provider-pic {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ddd;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  text-align: center; /* Stack the text vertically */
+}
+.profile-section div {
+  display: flex;
+  flex-direction: column; /* Stack text vertically */
+  justify-content: center; /* Center the text vertically */
+  align-items: center; /* Center the text horizontally */
+
+}
+.profile-section p {
+  margin: 0; /* Remove margin around paragraphs */
+  text-align: center; /* Center the text */
+  padding: 0; /* Remove any extra padding */
+}
+
+.visuals{
+  display: flex;
+  padding-left: 15%;
+}
+
+.progress-container {
+  flex:1;
+  max-width: 250px;
+}
+
+.appointment-container{
+  flex:1;
+  text-align: center;
+}
+.appointment-container p:first-child {
+  font-size: 100px;
+}
+.calendar-container {
+  flex:1;
+  max-width: 120px;
+}
+.calendar-container button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.appointment-details {
+  margin-top: 15px;
+}
+
+.appointment-card {
+  display: flex;
+  flex-direction: column; /* Stack items vertically */
+  gap: 10px;
+  padding: 10px;
+  background: #f5f5f5;
+  margin-bottom: 5px;
+  border-radius: 5px;
+}
+
+.calendar-modal {
+  position: fixed;
+  top: 25%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+}
+.appointment-details{
+  padding: 10px;
+  padding-left: 2%;
+  background: rgba(147, 145, 145, 0.878);
+  font-weight: bold;
+  display: flex;
+}
+
+.calendar{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%; /* Ensures it stretches fully */
+  height: 100%; /* Adjust as needed */
+  background-color: #2c73ba;
+}
+.react-calendar {
+  width: 100% !important;
+  max-height: 350px; /* Makes the calendar stretch */
+}
+
+.scrollable-appointments {
+  max-height: 300px; /* Restrict height */
+  overflow-y: auto; /* Enable scrolling */
+  background-color: #4CAF50; /* Your background color */
+
+}
+.scrollable-appointments::-webkit-scrollbar {
+ width: 8px;
+}
+.search-container {
+  position: relative;
+  width: 100%;
+  max-width: 300px; /* Adjust width as needed */
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: gray;
+}
+
+.search-bar {
+  width: 100%;
+  padding: 10px 10px 10px 35px; /* Left padding for icon */
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  outline: none;
+}
+
+.search-bar::placeholder {
+  color: gray;
+}
+
+.patient-details{
+  display: flex; 
+  padding: 2%;
+  gap: 3%;
+  max-height: 300px;
+  background-color: #4CAF50;
+}
+.patient-details div:first-child{
+  flex: 2;
+  text-align: center;
+  font-size: 24px;
+}
+.patient-details div:first-child img{
+  margin-bottom: 3%;
+}
+.patient-details div:last-child{
+  flex: 3;
+}
+.list-items{ 
+ max-height: 40vh;
+ overflow-x: auto;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* Blurred background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 80%;
+  max-height: 80vh;
+  text-align: center;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.notes-input {
+  width: 100%;
+  min-height: 100px;
+  margin-bottom: 10px;
+}
+
+.prescription-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  min-width: 400px;
+}
+.prescription-table input, .card-header input, .expand-prescription  {
+  border: none;
+
+}
+.prescription-table th, .prescription-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.delete-btn {
+  background: red;
+  color: white;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+}
+.status-label {
+  font-weight: bold;
+}
+
+.status-label.active , .status-label.paid{
+  color: #28a745;
+}
+
+.status-label.pending{
+  color:orange;
+}
+.status-label.completed {
+  color: #6c757d;
+}
+.appointment-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Align items to the left */
+  gap: 10px; /* Add space between elements */
+}
+
+.appointment-form div,.appointment-form h4, .appointment-form button {
+  width: 100%; /* Make each form row take full width */
+  display: flex;
+  flex-direction: column;
+}
+
+.appointment-form label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.appointment-form input,
+.appointment-form select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.event-indicator {
+  width: 80%;
+  height: 5px;
+  background-color: #007bff; /* Change to any color you like */
+  margin: auto;
+  border-radius: 3px;
+  margin-top: 2px;
+}
