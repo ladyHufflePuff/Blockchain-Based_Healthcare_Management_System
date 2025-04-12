@@ -1,0 +1,94 @@
+{
+    "namespace": "default",
+    "name": "IdentityContract",
+    "version": "1.1",
+    "description": "Smart contract to manage identities",
+    "methods": [
+      {
+        "name": "registerIdentity",
+        "description": "Registers a new identity",
+        "params": [
+          { "name": "did", "schema": {"type": "string" }},
+          { "name": "role", "schema": {"type": "string"}},
+          { "name": "dataJSON", "schema": {"type": "string"}}
+        ],
+        "returns":[
+          {"schema": {
+            "type": "object",
+            "properties": {
+              "message": { "type": "string" },
+              "did": { "type": "string" }
+            }
+          }
+        }
+        ], 
+        "invoke": true
+      },
+      {
+        "name": "getIdentity",
+        "description": "Retrieves an identity by its DID.",
+        "params": [
+          { "name": "did", "schema": {"type": "string"}}
+        ],
+        "returns":[ 
+            {"schema": {"type": "string"}}
+          ],
+        "invoke": false
+      },
+      {
+        "name": "updateIdentityRecord",
+        "description": "Updates the private record associated with a DID.",
+        "params": [
+          { "name": "did", "schema": { "type": "string" } },
+          { "name": "newDataJSON", "schema": { "type": "string" } }
+        ],
+        "returns":[ {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "did": { "type": "string" },
+              "role": { "type": "string" },
+              "dataHash": { "type": "string" },
+              "updatedAt": { "type": "string" }
+            }
+          }
+        }],
+        "invoke": true
+      },
+      {
+        "name": "deleteIdentity",
+        "description": "Deletes the identity and associated private data.",
+        "params": [
+          { "name": "did", "schema": { "type": "string" } }
+        ],
+        "returns": [
+        {
+          "schema": { "type": "string" }
+        }
+      ],
+        "invoke": true
+      },
+      {
+        "name": "getAllIdentities",
+        "description": "Retrieves all stored identities from the ledger.",
+        "params": [],
+        "returns":[ {
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "did": { "type": "string" },
+                "role": { "type": "string" },
+                "dataHash": { "type": "string" }
+              }
+            }
+          }
+        }],
+        "invoke": false
+    }
+      
+  ]
+
+}
+  

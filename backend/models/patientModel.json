@@ -1,0 +1,200 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title":"Patient",
+  "type": "object",
+  "properties": {
+    "encryptionKey": { "type": "string"},
+    "name": { "type": "string"},
+    "address": { "type": "string"},
+    "dob": { "type": "string", "format": "date"}, 
+    "mobileNumber": { "type": "string"},
+    "profilePicture": { "type": "string"}, 
+    "gender": { "type": "string", "enum": ["male", "female"] }, 
+    "emergencyContact": {
+      "type": "object",
+      "properties":{
+          "name": { "type": "string" },
+          "contact": { "type": "string" },
+          "relationship": { "type": "string" }
+        }
+      },
+    "insuranceDetails":  {
+      "type": "object",
+      "properties":{
+        "providerName": { "type": "string" },
+        "policyNumber": { "type": "string"},
+        "policyExpiryDate": { "type": "string", "format": "date"},
+        "coverageDetails":{ "type": "array", "items": { "type": "string" } },
+        "policyStatus": { "type": "string", "enum": ["active", "inactive"]},
+        "coverageBalance": { "type": "number"}
+      }  
+      },
+    "consultation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "doctor": { "type": "string" }, 
+          "date": { "type": "string", "format": "date" },
+          "file": { "type": "string" } 
+        }
+      } 
+    },
+    "medicalHistory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "condition": { "type": "string" },
+          "history": { "type": "string" },
+          "diagnosedBy": { "type": "string" }
+        }
+      }
+    },
+    "allergies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "allergy": { "type": "string" },
+          "severity": { "type": "string" },
+          "diagnosedBy": { "type": "string" }
+        }
+      }
+    },
+    "medications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "dosage": { "type": "string" },
+          "use": { "type": "string" }
+        }
+      }
+    },
+    "familyHistory":{
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "relationship": { "type": "string" },
+          "gender": { "type": "string" },
+          "medicalCondition": { "type": "string" }
+        }
+      }
+    },
+    "generalPractitioner": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "practice": { "type": "string" },
+        "contact": { "type": "string" }
+      }
+    },
+    "specialists": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "specialty": { "type": "string" },
+          "practice": { "type": "string" },
+          "contact": { "type": "string" }
+        }
+      }
+    },
+    "dentist": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "practice": { "type": "string" },
+        "contact": { "type": "string" } 
+      }
+    },
+    "healthReports": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "filename": { "type": "string" },
+          "file": { "type": "string" } 
+        }
+      }
+    },
+    "prescriptions":{
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": { "type": "string", "format": "date" },
+          "doctor": { "type": "string" },
+          "medication": { "type": "string" },
+          "dosage": { "type": "string" },
+          "frequency": { "type": "string" },
+          "instructions": { "type": "string" },
+          "duration": { "type": "string" },
+          "isActive": { "type": "boolean" }
+        }
+      }
+    },
+    "testResults": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "filename": { "type": "string" },
+          "uploadedBy": { "type": "string"},
+          "file": { "type": "string" } 
+        }
+      }
+    },
+    "billing": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "filename": { "type": "string" },
+          "file": { "type": "string" }, 
+          "status": { "type": "string" }
+        }
+      }
+    },
+    "appointments":  {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "doctor": { "type": "string" },
+          "date": { "type": "string", "format": "date" },
+          "time": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "accessControl":{
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "provider": { "type": "string"},
+          "dateGranted": { "type": "string", "format": "date" },
+          "dateRevoked": { "type": "string", "format": "date" },
+          "hasAccess": { "type": "boolean" }
+        }
+      }
+    },
+    "auditLog": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field": { "type": "string" },
+          "timestamp": { "type": "string" },
+          "performedBy": { "type": "string" }
+        }
+      }
+    }
+  }
+}

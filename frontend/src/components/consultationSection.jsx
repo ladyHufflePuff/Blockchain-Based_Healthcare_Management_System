@@ -1,31 +1,45 @@
 import React, { useState, useEffect } from "react";
 import Modal from "react-modal";
-import { FaEdit, FaTrash} from "react-icons/fa";
+import { FaEdit, FaTrash, FaFilePdf} from "react-icons/fa";
 import { jsPDF } from "jspdf";
 
-const ConsultationSection = () => {
+import { handleConsultationUpload, handleViewDocument } from "../services/authService";
+
+
+const ConsultationSection = ({patientData, patient, user, setPatientData}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [consultationNotes, setConsultationNotes] = useState("");
   const [prescriptions, setPrescriptions] = useState([]);
+  const [consultations, setConsultations] = useState([]);
+  const [consultationUploaded, setConsultationUploaded] = useState(false);
 
-  const [consultations, setConsultations] = useState([
-    { date: "2025-03-18", doctor: "Dr. Smith", notes: "Follow-up required in 2 weeks", file: "First Draft" },
-    { date: "2025-02-25", doctor: "Dr. Adams", notes: "Patient responded well to treatment", file: "First Draft" },
-  ]);
-
+  const [vitals, setVitals] = useState({
+    bloodPressure: "",
+    heartRate: "",
+    temperature: "",
+    weight: "",
+    height: ""
+  });
   const today = new Date().toISOString().split("T")[0]; // Current date
   useEffect(() => {
     const draft = { notes: consultationNotes, prescriptions };
     localStorage.setItem("consultationDraft", JSON.stringify(draft));
-  }, [consultationNotes, prescriptions]);
+    if (patientData?.consultation) {
+      setConsultations(patientData.consultation);
+    }
+    if (patientData?.vitals) {
+      setVitals(patientData.vitals);
+    }  
+    
+  }, [consultationNotes, prescriptions, patientData, consultationUploaded]);
   
   const addMedicationRow = () => {
     setPrescriptions([...prescriptions, { name: "", dosage: "", frequency: "", instructions: "", duration: "" }]);
   };
-  const handleSave = () => {
+  const handleSave = async () => {
     const newConsultation = {
       date: today,
-      doctor: "Dr. JohnPaul",
+      doctor: user?.record.name,
       notes: consultationNotes,
       prescription: prescriptions,
     };
@@ -35,7 +49,7 @@ const ConsultationSection = () => {
 
     // Convert to PDF
     const doc = new jsPDF();
-    let yPosition = 10; // Starting Y-position
+    let yPosition = 10; 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(20);
     doc.text("Consultation Summary", 70, yPosition);
@@ -56,29 +70,29 @@ const ConsultationSection = () => {
     doc.setFont("helvetica", "bold");
     doc.text("Blood Pressure :", 10, yPosition);
     doc.setFont("helvetica", "normal");
-    doc.text("120/80 mmHg", 45, yPosition);
+    doc.text(vitals.bloodPressure, 45, yPosition);
   
     doc.setFont("helvetica", "bold");
     doc.text("Heart Rate: ", 130, yPosition);
     doc.setFont("helvetica", "normal");
-    doc.text("72 bpm", 155, yPosition);
+    doc.text(vitals.heartRate, 155, yPosition);
     yPosition += 10;
   
     doc.setFont("helvetica", "bold");
     doc.text("Temperature: ", 10, yPosition);
     doc.setFont("helvetica", "normal");
-    doc.text("98.6°", 40, yPosition);
+    doc.text(vitals.temperature, 40, yPosition);
   
     doc.setFont("helvetica", "bold");
     doc.text("Height: ", 130, yPosition);
     doc.setFont("helvetica", "normal");
-    doc.text("195 cm", 145, yPosition);
+    doc.text(vitals.height, 145, yPosition);
     yPosition += 10;
   
     doc.setFont("helvetica", "bold");
     doc.text("Weight: ", 10, yPosition);
     doc.setFont("helvetica", "normal");
-    doc.text("200 lb", 27, yPosition);
+    doc.text(vitals.weight, 27, yPosition);
     yPosition += 10;
   
     // **Consultation Notes**
@@ -107,10 +121,10 @@ const ConsultationSection = () => {
       doc.text("Duration", 170, yPosition);
       yPosition += 5;
   
-      doc.line(10, yPosition, 200, yPosition); // Horizontal line
+      doc.line(10, yPosition, 200, yPosition);
       yPosition += 5;
   
-      doc.setFont("helvetica", "normal"); // Reset font for data rows
+      doc.setFont("helvetica", "normal"); 
       validPrescriptions.forEach((med) => {
         doc.text(med.name, 10, yPosition, { maxWidth: 35 });
         doc.text(med.dosage, 50, yPosition, { maxWidth: 25} );
@@ -120,44 +134,51 @@ const ConsultationSection = () => {
         yPosition += 15;
       });
   
-      doc.line(10, yPosition, 200, yPosition); // Closing horizontal line
+      doc.line(10, yPosition, 200, yPosition); 
     } else {
       doc.setFont("helvetica", "normal");
       doc.text("No prescription added", 10, yPosition);
       yPosition += 10;
     }
-    doc.save(`Consultation_${today}.pdf`);
-    // Add to past consultations
-    setConsultations([ { date: today, doctor: "Dr. JohnPaul", notes: consultationNotes, file: `Consultation_${today}` },
-      ...consultations,]);
+    
+    const convertBlobToBase64 = (blob) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    };
 
-    // Reset fields
-    setConsultationNotes("");
-    setPrescriptions([]);
-    setIsModalOpen(false);
+    const pdfBlob = doc.output('blob');
+    const file = await convertBlobToBase64(pdfBlob); 
+   
+    return file
   };
-
- 
 
   return (
     <div>
-      <div className="dashboard-card">
-        <div className="card-header">
-          <span>{today}</span>
-          <span>Reviewed by: Dr. JohnPaul</span>
-          <button className="expand-prescription" onClick={() => setIsModalOpen(true)}>
-            <FaEdit /> Edit
-          </button>
+      {!consultationUploaded &&(
+        <div className="dashboard-card">
+          <div className="card-header">
+            <span>{today}</span>
+            <span>Reviewing: {user.record.name}</span>
+            <button className="edit-toggle back-btn" onClick={() => setIsModalOpen(true)}>
+              <FaEdit /> Edit
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+   
       {consultations.length > 0 ? (
         <div className="consultation-list">
-          {consultations.map((consultation, index) => (
+          {[...consultations].reverse().map((consultation, index) => (
             <div key={index} className="dashboard-card">
               <div className="card-header">
               <span>{consultation.date}</span>
               <span>Reviewed by: {consultation.doctor}</span>
-              <button className="expand-prescription" onClick={() => window.open(`/${consultation.file}.pdf`, "_blank")}>View</button>
+              <button className="edit-toggle back-btn" onClick={() => handleViewDocument(patient, consultation.file)}>
+                <FaFilePdf /> View</button>
               </div>
             </div>
           ))}
@@ -176,11 +197,11 @@ const ConsultationSection = () => {
 
         {/* Vitals */}
         <div className="vitals">
-          <p><strong>Blood Pressure:</strong> 120/80 mmHg</p>
-          <p><strong>Heart Rate:</strong> 72 bpm</p>
-          <p><strong>Temperature:</strong> 98.6°F</p>
-          <p><strong>Height:</strong> 195cm</p>
-          <p><strong>Weight:</strong> 200lb</p>
+          <p><strong>Blood Pressure:</strong> {vitals.bloodPressure}</p>
+          <p><strong>Heart Rate:</strong>{vitals.heartRate}</p>
+          <p><strong>Temperature:</strong>{vitals.temperature}</p>
+          <p><strong>Height:</strong>{vitals.weight}</p>
+          <p><strong>Weight:</strong>{vitals.height}</p>
         </div>
 
         {/* Consultation Notes */}
@@ -285,7 +306,21 @@ const ConsultationSection = () => {
 
             <div className="modal-buttons">
               <button onClick={() => setIsModalOpen(false)}>Close</button>
-              <button onClick={() => handleSave()}>Save</button>
+              <button onClick={async () =>{
+                const base64pdf = await handleSave();
+                await handleConsultationUpload(user, patient, base64pdf, prescriptions, setPatientData, setConsultationUploaded)
+                setConsultationNotes("");
+                setVitals({
+                  bloodPressure: "",
+                  heartRate: "",
+                  temperature: "",
+                  weight: "",
+                  height: ""
+                });                
+                setPrescriptions([]);
+                setIsModalOpen(false);
+              }}>
+                Save</button>
             </div>
       </Modal>
     </div>

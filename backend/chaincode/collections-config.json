@@ -1,0 +1,27 @@
+[
+    {
+      "name": "DoctorPrivateData",
+      "policy": "OR('Org1MSP.member')",
+      "requiredPeerCount": 0,
+      "maxPeerCount": 1,
+      "blockToLive": 0,
+      "memberOnlyRead": true
+    },
+    {
+      "name": "NursePrivateData",
+      "policy": "OR('Org1MSP.member')",
+      "requiredPeerCount": 0,
+      "maxPeerCount": 1,
+      "blockToLive": 0,
+      "memberOnlyRead": true
+    },
+    {
+      "name": "PatientPrivateData",
+      "policy": "OR('Org1MSP.member')",
+      "requiredPeerCount": 0,
+      "maxPeerCount": 1,
+      "blockToLive": 0,
+      "memberOnlyRead": true
+    }
+  ]
+  

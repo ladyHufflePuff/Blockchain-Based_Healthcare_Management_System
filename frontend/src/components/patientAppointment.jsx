@@ -1,50 +1,69 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { usePatient } from "../pages/patientPortal";
+import { handleAppointmentManagement } from "../services/authService";
 
 const Appointment = () => {
-    const [activeTab, setActiveTab] = useState("requests");
-    const [expandedIndex, setExpandedIndex] = useState(null);
+  const { patientRecord,setPatientRecord, user } = usePatient();
+  const [activeTab, setActiveTab] = useState("requests");
+  const [expandedIndex, setExpandedIndex] = useState(null);
+  const [appointmentRequests, setAppointmentRequests] = useState([]);
+  const [appointmentHistory, setAppointmentHistory] = useState([]);
 
-    const appointments = [
-      { clinic: "ENT Clinic",
-        date: "12-04-25",
-        doctor: "Dr.Jane Doe",
-        time: "10:30",
-        notes:"Follow-up for hearing test",
-        status: "Attended"
-      },
-      { clinic: "Colonoscopy Clinic",
-        date: "21-04-25",
-        doctor: "Dr. John Smith",
-        time: "14:00",
-        notes: "Routine check-up",
-        status: "Missed"
-      }
-    ];
-   
-    const toggleDetails = (index) => {
+  const today = new Date().toISOString().split("T")[0];
+
+  useEffect(() => {
+    if (patientRecord ) {
+      setAppointmentRequests(patientRecord.appointmentRequests || []);
+
+      const pastAppointments = (patientRecord.appointments || [])
+      .filter((appt) => {
+        const apptDate = new Date(appt.date).toISOString().split("T")[0];
+        return apptDate < today;
+      })
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    setAppointmentHistory(pastAppointments);
+    }
+  }, [patientRecord]);
+
+  const toggleDetails = (index) => {
     setExpandedIndex(expandedIndex === index ? null : index);
   };
-    const handleTabChange = (tab) => {
-      setActiveTab(tab);
-      setExpandedIndex(null);
-    };
 
-    return (
-      <div>
-        <div className="tabs">
-            <button className={`tab ${activeTab === "requests" ? "active" : ""}`} 
-          onClick={() => handleTabChange("requests")}>Appointment Requests</button>
-            <button className={`tab ${activeTab === "history" ? "active" : ""}`} 
-          onClick={() => handleTabChange("history")}>Appointment History</button>
-        </div>
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setExpandedIndex(null);
+  };
 
-        <div className={`appointments-content ${activeTab === "requests" ? "requests-grid" : "history-list"}`}>
-        {activeTab === "requests"
-          ? appointments.map((appt) => (
-              <div className="appointment-card">
+  return (
+    <div>
+      <div className="tabs">
+        <button
+          className={`tab ${activeTab === "requests" ? "active" : ""}`}
+          onClick={() => handleTabChange("requests")}
+        >
+          Appointment Requests
+        </button>
+        <button
+          className={`tab ${activeTab === "history" ? "active" : ""}`}
+          onClick={() => handleTabChange("history")}
+        >
+          Appointment History
+        </button>
+      </div>
+
+      <div
+        className={`appointments-content ${
+          activeTab === "requests" ? "requests-grid" : "history-list"
+        }`}
+      >
+        {activeTab === "requests" ? (
+          appointmentRequests.length > 0 ? (
+            appointmentRequests.map((appt, index) => (
+              <div className="appointment-card" key={index}>
                 <div className="card-header">
                   <div className="patient-info">
-                    <h3>{appt.clinic}</h3>
+                    <h3>{appt.name}</h3>
                     <p className="doctor-name">{appt.doctor}</p>
                   </div>
                   <div className="appointment-time">
@@ -52,37 +71,45 @@ const Appointment = () => {
                     <p className="appointment-time-text">{appt.time}</p>
                   </div>
                 </div>
-                <p className="appointment-notes">{appt.notes}</p>
+                <p className="appointment-notes">{appt.description}</p>
                 <div className="btns">
-                    <button>Accept</button>
-                    <button>Decline</button>
+                  <button
+                  onClick={() => handleAppointmentManagement(user, appt, "accept", setPatientRecord)}
+                  >Accept</button>
+                  <button
+                  onClick={() => handleAppointmentManagement(user, appt, "decline",setPatientRecord)}
+                  >Decline</button>
                 </div>
               </div>
             ))
-          : appointments.map((appt, index) => (
-            <div className="dashboard-card">
+          ) : (
+            <p>No appointment requests available.</p>
+          )
+        ) : appointmentHistory.length > 0 ? (
+          appointmentHistory.map((appt, index) => (
+            <div className="dashboard-card" key={index}>
               <div className="card-header">
-                <span className="clinic">{appt.clinic}</span>
+                <span className="clinic">{appt.name}</span>
                 <span className="date">{appt.date}</span>
-                <button className="view-btn"onClick={() => toggleDetails(index)}>
-                {expandedIndex === index ? "Hide Details ▲" : "View Details ▼"}</button>
+                <button className="view-btn" onClick={() => toggleDetails(index)}>
+                  {expandedIndex === index ? "Hide Details ▲" : "View Details ▼"}
+                </button>
               </div>
               {expandedIndex === index && (
                 <div className="details-dropdown">
                   <p><strong>Doctor:</strong> {appt.doctor}</p>
                   <p><strong>Time:</strong> {appt.time}</p>
-                  <p><strong>Notes:</strong> {appt.notes}</p>
-                  <p><strong>Status:</strong> {appt.status}</p>
+                  <p><strong>Notes:</strong> {appt.description}</p>
                 </div>
               )}
             </div>
-            
-          ))}
+          ))
+        ) : (
+          <p>No appointment history available.</p>
+        )}
       </div>
-
     </div>
-    );
-  };
-  
-  export default Appointment;
-  
+  );
+};
+
+export default Appointment;

@@ -1,44 +1,35 @@
 import React, { useState, useEffect } from "react";
+import { FaEdit, FaFilePdf,} from "react-icons/fa";
 
-import { FaEdit, FaTrash} from "react-icons/fa";
+import { handleTestResultUpload, handleViewDocument } from "../services/authService";
+
+const TestResultSection = ({patientData, patient, user, setPatientData }) => {
+    const [testResults, setTestResults] = useState([]);
+    const [testName, setTestName] = useState("");
+    const today = new Date().toISOString().split("T")[0]; 
 
 
-const TestResultSection = () => {
-    const [testResults, setTestResults] = useState([
-        { date: "2025-03-18", doctor: "Dr. Smith", fileName: "Blood Test - March 2025", file: "test1.pdf" },
-        { date: "2025-02-25", doctor: "Dr. Adams", fileName: "MRI Scan - Feb 2025", file: "test2.pdf" },
-      ]);
-    
-  const [testName, setTestName] = useState("");
-  const today = new Date().toISOString().split("T")[0]; // Get today's date (YYYY-MM-DD)
-
-  // Function to format the date (YYYY-MM-DD -> "19 February 2025")
-  const formatDate = (dateString) => {
-    const months = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ];
-
-    const [year, month, day] = dateString.split("-"); // Split "2025-03-19" into parts
-    return `${parseInt(day)} ${months[parseInt(month) - 1]} ${year}`;
-  };
+  useEffect(() => {
+      setTestResults(patientData.testResults);
+  }, [patientData]);
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
+    if (!file || !testName.trim()) return;
 
-    if (file && testName.trim() !== "") {
-      const formattedDate = formatDate(today); // Format the date properly
+    const filename = `${testName} [${today}]`;
 
-      const newResult = {
-        date: today,
-        doctor: "Dr. JohnPaul", // Hardcoded for now
-        fileName: `${testName} - ${formattedDate}`,
-        file: URL.createObjectURL(file), // Temporary URL for viewing
-      };
+    const reader = new FileReader();
 
-      setTestResults([newResult, ...testResults]);
-      setTestName(""); // Clear input field after upload
-    }
+    reader.onloadend = async () => {
+      const base64Pdf = reader.result;
+      await handleTestResultUpload(user, patient, base64Pdf, filename, setPatientData);
+      setTestName("");
+    };
+
+    reader.onerror = (err) => console.error("File read error:", err);
+
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -63,12 +54,12 @@ const TestResultSection = () => {
       {/* Test Results List */}
       {testResults.length > 0 ? (
         <div className="test-results-list">
-          {testResults.map((result, index) => (
+          {[...testResults].reverse().map((result, index) => (
             <div key={index} className="dashboard-card">
               <div className="card-header">
-                <span>{result.fileName}</span>
-                <span>Uploaded by: {result.doctor}</span>
-                <button className="expand-prescription" onClick={() => window.open(result.file, "_blank")}>View</button>
+                <span>{result.filename}</span>
+                <span>Uploaded by: {result.uploadedBy}</span>
+                <button className="expand-prescription back-btn" onClick={() => handleViewDocument(patient, result.file)}> <FaFilePdf />View</button>
               </div>
               
             </div>

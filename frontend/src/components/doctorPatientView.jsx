@@ -1,4 +1,7 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
+
+import { useDoctor } from "../pages/doctorPortal.jsx";
+import { fetchRecord } from "../services/authService.js";
 import ConsultationSection from "./consultationSection.jsx";
 import TestResultSection from "./testResultSection.jsx";
 import PrescriptionSection from "./prescriptionSection.jsx";
@@ -6,39 +9,57 @@ import BillingSection from "./billingSection.jsx";
 import MedicalRecordSection from "./medicalRecordsSection.jsx";
 import AuditLogSection from "./auditLogSection.jsx";
 
-const DoctorPatientView = ({onBack}) => {
+const DoctorPatientView = ({patient, onBack}) => {
+  const { user} = useDoctor();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [activeTab, setActiveTab] = useState("consultations");
   const [expandedIndex, setExpandedIndex] = useState(null);
-  const patient = {
-        profilePic: "/public/person 6.png", // Make sure the image is in the public folder
-        name: "John Doe",
-        min: " 123456789",
-        dob: " 05-12-1990",
-        email: "johndoe@email.com",
-        mobile: "+1 234 567 8901",
-        emergencyContact: "+1 987 654 3210",
-      };
+  const [patientData, setPatientData] = useState(null);
 
-  const formattedDate = selectedDate.toISOString().split("T")[0];
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-  };
+  useEffect(() => {
+    const loadPatient = async () => {
+      const data = await fetchRecord(patient);
+      if (data) setPatientData(data);
+    };
+
+    loadPatient();
+  }, [patient]);
+
+  const calculateAge = (dob) => {
+    if (!dob) return '';
+  
+    const birthDate = new Date(dob);
+    const today = new Date();
+  
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+  
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+  
+    return age;
+  };  
+
  
+  const formattedDate = selectedDate.toISOString().split("T")[0];
+  const handleTabChange = (tab) => {setActiveTab(tab)};
 
+  if (!patientData) return <p>Loading patient data...</p>;
+ 
   return (
+    
     <div>
        <button className="back-btn" onClick={onBack}>← Back</button>
       <div className="patient-details">
         <div>
-          <img src={patient.profilePic} className="profile-pic" />
-          <p><strong>{patient.name} </strong></p> 
+         
+          <img src={patientData.profilePicture} className="profile-pic" />
+          <p><strong>{patientData.name} </strong></p> 
         </div>
         <div className="">
-            <p><strong>MIN:</strong> {patient.min}</p>
-            <p><strong>DOB:</strong> {patient.dob}</p>
-            <p><strong>Email:</strong> {patient.email}</p>
-            <p><strong>Mobile:</strong> {patient.mobile}</p>
+            <p><strong>Age:</strong> {calculateAge(patientData.dob)}</p>
+            <p><strong>Mobile:</strong> {patientData.mobileNumber}</p>
         </div>
       </div>
       <div>
@@ -58,12 +79,30 @@ const DoctorPatientView = ({onBack}) => {
         </div>
       </div>
       <div className="list-items">
-      {activeTab === "consultations" && <ConsultationSection />}
-      {activeTab === "record" && <MedicalRecordSection />}
-      {activeTab === "prescriptions" && <PrescriptionSection />}
-      {activeTab === "results" && <TestResultSection />}
-      {activeTab === "billing" && <BillingSection />}
-      {activeTab === "audit" && <AuditLogSection />}
+      {activeTab === "consultations" && <ConsultationSection  patientData={patientData}
+      patient={patient}
+      user={user}
+      setPatientData={setPatientData} />}
+      {activeTab === "record" && <MedicalRecordSection patientData={patientData}
+      patient={patient}
+      user={user}
+      setPatientData={setPatientData} />}
+      {activeTab === "prescriptions" && <PrescriptionSection  patientData={patientData}
+      patient={patient}
+      user={user}
+      setPatientData={setPatientData} />}
+      {activeTab === "results" && <TestResultSection patientData={patientData} 
+      patient={patient}
+      user={user}
+      setPatientData={setPatientData}/>}
+      {activeTab === "billing" && <BillingSection patientData={patientData}
+      patient={patient}
+      user={user}
+      setPatientData={setPatientData} />}
+      {activeTab === "audit" && <AuditLogSection patientData={patientData}
+      patient={patient}
+      user={user}
+      setPatientData={setPatientData} />}
       </div>
     </div>
   );

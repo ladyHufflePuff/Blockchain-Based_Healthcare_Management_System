@@ -1,3 +1,6 @@
+uploads
 node_modules
 .env
-uploads
+core.yaml
+identity_chaicode.tar.gz
+

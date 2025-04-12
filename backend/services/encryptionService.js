@@ -1,27 +1,42 @@
 import crypto from 'crypto';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const masterKey = process.env.MASTER_KEY;
 
 // Generate a random encryption key
 export const generateEncryptionKey = () => {
-    return crypto.randomBytes(32).toString('hex'); // 256-bit key
+    const rawKey = crypto.randomBytes(32).toString('hex');
+    let encryptedKey = encrypt(rawKey, masterKey);
+    return { rawKey, encryptedKey };
 };
 
-// Encrypt a file buffer
-export const encryptFile = (fileBuffer, encryptionKey) => {
+// Decrypts encrypted key
+export const decryptEncryptionKey = (encryptedKey, iv) => {
+    const encryptionKey= decrypt(encryptedKey, iv, masterKey);
+    return encryptionKey;
+};
+
+// Encrypts data
+export const encrypt = (data, encryptionKey) => {
     const iv = crypto.randomBytes(16); 
     const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(encryptionKey, 'hex'), iv);
     
-    let encrypted = cipher.update(fileBuffer);
+    let encrypted = cipher.update(data, 'utf-8');
     encrypted = Buffer.concat([encrypted, cipher.final()]);
     
-    return { encryptedData: encrypted, iv: iv.toString('hex') };
+    return { encryptedData: encrypted.toString('hex'), iv: iv.toString('hex') };
 };
 
-// Decrypt a file buffer
-export const decryptFile = (encryptedData, iv, encryptionKey) => {
+// Decrypts data
+export const decrypt = (encryptedData, iv, encryptionKey) => {
     const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(encryptionKey, 'hex'), Buffer.from(iv, 'hex'));
     
     let decrypted = decipher.update(Buffer.from(encryptedData, 'hex'));
     decrypted = Buffer.concat([decrypted, decipher.final()]);
     
-    return decrypted;
+    return decrypted.toString();
 };
+
+

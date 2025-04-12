@@ -1,138 +1,180 @@
-import React, {useState} from "react";
+import React, {useState, useEffect, useMemo} from "react";
 import Calendar from "react-calendar";
 import Modal from "react-modal";
 import { FaEdit, FaTrash} from "react-icons/fa";
 import "react-calendar/dist/Calendar.css";
 
+import { useDoctor } from "../pages/doctorPortal";
+import { fetchRecord, handleSaveAppointment, handleDeleteAppointment } from "../services/authService";
 
 const DoctorAppointmentCenter = () => {
+  const { doctorRecord, setDoctorRecord, user } = useDoctor();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editingIndex, setEditingIndex] = useState(null);
-  const [newAppointment, setNewAppointment] = useState({ name: "", notes: "", patient: "", time: "08:00" ,duration: "30"});
+  const [appointments, setAppointments] = useState([])
+  const [accessiblePatients, setAccessiblePatients] = useState([]);
+  const [availableTimes, setAvailableTimes] = useState([]);
+  const [blocked, setBlocked] = useState(new Set());
+  const [newAppointment, setNewAppointment] = useState({ name: "", notes: "", patient: "", time: "" ,duration: ""});
 
-  const [appointments, setAppointments] = useState({
-    "2025-02-25": [
-      { name: "Gary McLaren", type: "Craniotomy Follow-up", time: "13:00" },
-      { name: "Susan Shaw", type: "Lumbar Puncture", time: "14:30" },
-    ],
-    "2025-03-17": [
-      { name: "James Carter", type: "MRI Scan", time: "10:00" },
-      
-    ],
-  });
+  useEffect(() => {
+    if (doctorRecord?.appointments) {
+      setAppointments(doctorRecord.appointments);
+    };  
 
-  const formattedDate = selectedDate.toISOString().split("T")[0];
+    const fetchAccessiblePatients = async () => {
+      if (!doctorRecord?.patientAccess || doctorRecord.patientAccess.length === 0) return;
+      try {
+        const patientRecords = await Promise.all(
+          doctorRecord.patientAccess.map(async (entry) => {
+            const did = entry.patient; 
+            const record = await fetchRecord(did);
+            return { name: record.name, did };
+          })
+        );
+        setAccessiblePatients(patientRecords);
+      } catch (err) {
+        console.error("Failed to fetch patient records:", err);
+      }
+    };
+
+    const updateAvailableTimes = () => {
+      const allTimes = generateTimeSlots("08:00", "16:00", 30);
+      const blocked = getBlockedTimes();
+      const available = allTimes.filter((time) => !blocked.has(time));
+      setAvailableTimes(available);
+    };
+
+    const blockedSet = getBlockedTimes();
+    setBlocked(blockedSet); 
+  
+    updateAvailableTimes();
+    fetchAccessiblePatients();
+  }, [doctorRecord, appointments, selectedDate]);
+
+  const formattedDate = useMemo(() => {
+    return selectedDate.toLocaleDateString("en-CA");
+  }, [selectedDate]);  
+
   const disableNonWeekdays = ({ date }) => {
     const day = date.getDay();
     return day === 0 || day === 6;
   };
 
-  // Get available times (8 AM - 5 PM), excluding booked slots
   const getBlockedTimes = () => {
     const blockedTimes = new Set();
-    (appointments[formattedDate] || []).forEach((appt) => {
-      const [startHour, startMinutes] = appt.time.split(":").map(Number);
-      let blockedTime = new Date();
-      blockedTime.setHours(startHour, startMinutes, 0, 0);
-      const durationMinutes = parseInt(appt.duration, 10);
-
-      for (let i = 0; i < durationMinutes; i += 30) {
-        blockedTimes.add(blockedTime.toTimeString().slice(0, 5));
-        blockedTime.setMinutes(blockedTime.getMinutes() + 30);
+    appointments.forEach((appt) => {
+      if (appt.date === formattedDate) {
+        const [startHour, startMinutes] = appt.time.split(":").map(Number);
+        const duration = parseInt(appt.duration, 10); 
+  
+        const blockedStart = new Date();
+        blockedStart.setHours(startHour, startMinutes, 0, 0);
+  
+        const end = new Date(blockedStart.getTime() + duration * 60000);
+  
+        const timeSlot = new Date(blockedStart);
+        while (timeSlot < end) {
+          const timeStr = timeSlot.toTimeString().slice(0, 5);
+          blockedTimes.add(timeStr);
+          timeSlot.setMinutes(timeSlot.getMinutes() + 30);
+        }
       }
     });
-
     return blockedTimes;
   };
 
-  // Get available times (8:00 AM - 4:30 PM), removing booked slots
-  const getAvailableTimes = () => {
-    const blockedTimes = getBlockedTimes();
-    return Array.from({ length: 17 }, (_, i) => {
-      const hour = 8 + Math.floor(i / 2);
-      const minutes = i % 2 === 0 ? "00" : "30";
-      const time = `${String(hour).padStart(2, "0")}:${minutes}`;
-      return blockedTimes.has(time) ? null : time;
-    }).filter(Boolean);
+  const generateTimeSlots = (startTime, endTime, interval) => {
+    const slots = [];
+    const [startHour, startMin] = startTime.split(":").map(Number);
+    const [endHour, endMin] = endTime.split(":").map(Number);
+  
+    let current = new Date();
+    current.setHours(startHour, startMin, 0, 0);
+  
+    const end = new Date();
+    end.setHours(endHour, endMin, 0, 0);
+  
+    while (current <= end) {
+      slots.push(current.toTimeString().slice(0, 5)); 
+      current = new Date(current.getTime() + interval * 60000);
+    }
+  
+    return slots;
   };
+   
   const handleDateClick = (date) => {
     setSelectedDate(date);
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize to midnight for accurate comparison
+    today.setHours(0, 0, 0, 0); 
     if (date >= today) {
-      setIsModalOpen(true); // Open modal only for today and future dates
-      setEditingIndex(null);
+      setIsModalOpen(true); 
       setShowForm(false);
-      setNewAppointment({ name: "", type: "", time: "08:00", duration: "30" })
+      setNewAppointment({ patient: "", name: "", description:"", time: "", duration: "30" })
     };
   }
 
-  const handleSaveAppointment = () => {
-    if (newAppointment.type && newAppointment.name) {
-      const updatedAppointments = { ...appointments };
-      if (!updatedAppointments[formattedDate]) {
-        updatedAppointments[formattedDate] = [];
-      }
+  const saveAppointment =  async () => {
+    if (newAppointment.patient && newAppointment.name) {
+      const appointmentWithDate = {
+        ...newAppointment,
+        date: formattedDate, 
+      };
+      await handleSaveAppointment(user, appointmentWithDate, setDoctorRecord);
 
-      if (editingIndex !== null) {
-        // Update existing appointment
-        updatedAppointments[formattedDate][editingIndex] = newAppointment;
-        setEditingIndex(null);
-      } else {
-        // Add new appointment
-        updatedAppointments[formattedDate].push(newAppointment);
-      }
-
-      setAppointments(updatedAppointments);
-      setNewAppointment({ name: "", notes: "", patient: "", time: "08:00", duration: "30" });
+      setAppointments((prev) => [...prev, appointmentWithDate]);
+      
+      setNewAppointment({
+         patient: "", 
+         name: "", 
+         description: "", 
+         time: "",
+        duration: "30" });
       setIsModalOpen(false);
     }
-  };
-  const handleEditAppointment = (index) => {
-    setEditingIndex(index);
-    setNewAppointment(appointments[formattedDate][index]);
-  };
-
-  const handleDeleteAppointment = (index) => {
-    const updatedAppointments = { ...appointments };
-    updatedAppointments[formattedDate].splice(index, 1);
-    if (updatedAppointments[formattedDate].length === 0) {
-      delete updatedAppointments[formattedDate];
-    }
-    setAppointments(updatedAppointments);
-  };
+  }; 
 
   return (
     <div>
       <div className="calendar">
       <Calendar
-          onChange={handleDateClick}// Updates the selected date
+          onChange={handleDateClick}
           value={selectedDate}
           tileDisabled={disableNonWeekdays}
           tileContent={({ date, view }) => {
-            const formattedDate = date.toISOString().split("T")[0];
-            return appointments[formattedDate] ? <div className="event-indicator"></div> : null;
+            const formattedDate = date.toLocaleDateString("en-CA");
+            const hasAppointment = appointments.some(appt => appt.date === formattedDate);
+            return hasAppointment ? <div className="event-indicator"></div> : null;
           }}
         />
       </div>
       <div>
         <div className="appointment-details"> Appointment History</div>
         <div className="list-items">
-        {appointments[formattedDate] ? (
-          appointments[formattedDate].map((appt, index) => (
-            <div className="dashboard-card">
-              <div key={index} className="card-header">
-                <span className="clinic">{appt.name}</span>
-                <span className="date">{appt.type}</span>
+          {appointments
+            .filter((appt) =>{
+              const apptDate = new Date(appt.date);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              return(apptDate < today && appt.date === formattedDate);
+            })
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .map((appt, index) => (
+            <div className="dashboard-card" key={index}>
+              <div className="card-header">
+                <span className="clinic">{appt.patient}</span>
+                <span className="date">{appt.name}</span>
                 <span className="date">{appt.time}</span>
               </div>
             </div>
-          ))
-        ) : (
-          <p>No appointments for this date.</p>
-        )}
+          ))}
+          {appointments.filter(
+            (appt) =>
+              new Date(appt.date) < new Date() &&
+              appt.date === formattedDate).length === 0 && (
+              <p>No past appointments found.</p>
+            )}
         </div>
       </div>
       <Modal
@@ -143,17 +185,18 @@ const DoctorAppointmentCenter = () => {
       >
         <h3>Appointments for {selectedDate.toDateString()}</h3>
 
-        {appointments[formattedDate]?.length > 0 ? (
-          <ul className="appointment-list">
-            {appointments[formattedDate].map((appt, index) => (
+        {appointments.filter(appt => appt.date === formattedDate).length > 0 ? (
+          <div className="appointment-list">
+            {appointments
+              .filter(appt => appt.date === formattedDate)
+              .map((appt, index) => (
               <div className="dashboard-card">
                 <div className="card-header">
+                <span> {appt.patient}</span>
                 <span> {appt.name}</span>
-                <span> {appt.type}</span>
                 <span>{appt.time}</span>
                 <span>
-                <FaEdit className="edit-icon" onClick={() => handleEditAppointment(index)} />
-                <FaTrash className="delete-icon" onClick={() => handleDeleteAppointment(index)} />
+                <FaTrash className="delete-icon" onClick={() => handleDeleteAppointment(user,appt, setDoctorRecord)} />
                 </span>
                 
               </div>
@@ -161,19 +204,40 @@ const DoctorAppointmentCenter = () => {
               
              
             ))}
-          </ul>
+          </div>
         ) : (
           <p>No appointments scheduled for this date.</p>
         )}
 
-<button className="add-appointment-btn" onClick={() => setShowForm(!showForm)}>
+        <button className="add-appointment-btn" onClick={() => setShowForm(!showForm)}>
           {showForm ? "Cancel" : "Add New Appointment"}
         </button>
 
-        {/* Appointment Form (only visible when button is clicked) */}
         {showForm && (
           <div className="appointment-form">
-            <h4>{editingIndex !== null ? "Edit Appointment" : "New Appointment"}</h4>
+            <h4>New Appointment</h4>
+            <div>
+            <label>Patient:</label>
+            <select
+              value={newAppointment.patient}
+              onChange={(e) =>{
+                const selectedDid = e.target.value;
+                const selectedPatient = accessiblePatients.find(p => p.did === selectedDid);
+                setNewAppointment({ ...newAppointment, 
+                patient: selectedDid
+              })
+            }}
+            >
+              <option value="">Select a patient</option>
+              {accessiblePatients.map((patient) => (
+                <option key={patient.did} value={patient.did}>
+                  {patient.name}
+                </option>
+              ))}
+            </select>
+            </div>
+
+          
             <div>
             <label>Appointment Name:</label>
             <input
@@ -182,13 +246,12 @@ const DoctorAppointmentCenter = () => {
               onChange={(e) => setNewAppointment({ ...newAppointment, name: e.target.value })}
             />
             </div>
-          
             <div>
-            <label>Type:</label>
+            <label>Details:</label>
             <input
               type="text"
-              value={newAppointment.type}
-              onChange={(e) => setNewAppointment({ ...newAppointment, type: e.target.value })}
+              value={newAppointment.description}
+              onChange={(e) => setNewAppointment({ ...newAppointment, description: e.target.value })}
             />
             </div>
            
@@ -198,7 +261,7 @@ const DoctorAppointmentCenter = () => {
               value={newAppointment.time}
               onChange={(e) => setNewAppointment({ ...newAppointment, time: e.target.value })}
             >
-              {getAvailableTimes().map((time) => (
+              {availableTimes.map((time) => (
                 <option key={time} value={time}>
                   {time}
                 </option>
@@ -217,8 +280,8 @@ const DoctorAppointmentCenter = () => {
             />
             </div>
     
-            <button onClick={handleSaveAppointment} disabled={!newAppointment.name || !newAppointment.type}>
-              {editingIndex !== null ? "Update" : "Save"}
+            <button onClick={saveAppointment} disabled={!newAppointment.name && !newAppointment.patient}>
+              Save
             </button>
           </div>
         )}

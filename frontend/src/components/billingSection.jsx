@@ -1,53 +1,39 @@
-import React, { useState,} from "react";
+import React, { useState, useEffect} from "react";
 import Modal from "react-modal";
 import {  FaPlus, FaFilePdf, FaTrash  } from "react-icons/fa";
 import { jsPDF } from "jspdf";
 
-const BillingSection = () => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-   
-    const [services, setServices] = useState([]);
-    const [invoiceNumber, setInvoiceNumber] = useState(1);
-    const today = new Date().toISOString().split("T")[0];
-    const [pastInvoices, setPastInvoices]  = useState([
-      {
-        fileName: "Invoice_2025-03-15",
-        status: "paid" 
-      },
-      {
-        fileName: "Invoice_2025-02-28",
-        status: "pending"
-      },
-    ]);
-  
-    const serviceGroups = {
-      Consultation: ["General Consultation", "Specialist Consultation"],
-      LabTests: ["Blood Test", "MRI Scan", "X-Ray"],
-      Medication: ["Painkillers", "Antibiotics", "Insulin"],
-      Hospitalization: ["Overnight Stay", "ICU Admission"],
-      EmergencyCare: ["ER Visit", "Ambulance Service"],
-      SpecialistVisits: ["Cardiologist", "Neurologist"],
-      MentalHealth: ["Therapy Session", "Psychiatric Evaluation"],
-    };
-  
-    const fixedPrices = {
-      "General Consultation": 50,
-      "Specialist Consultation": 100,
-      "Blood Test": 30,
-      "MRI Scan": 200,
-      "X-Ray": 80,
-      Painkillers: 10,
-      Antibiotics: 25,
-      Insulin: 50,
-      "Overnight Stay": 500,
-      "ICU Admission": 1000,
-      "ER Visit": 150,
-      "Ambulance Service": 300,
-      Cardiologist: 120,
-      Neurologist: 150,
-      "Therapy Session": 80,
-      "Psychiatric Evaluation": 100,
-    };
+import { handleUploadbill, handleViewDocument } from "../services/authService";
+
+const BillingSection = ({patientData, patient, user, setPatientData }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [services, setServices] = useState([]);
+  const [invoiceNumber, setInvoiceNumber] = useState(1);
+  const [pastInvoices, setPastInvoices] = useState([]);
+  const [serviceGroups, setServiceGroups] = useState({});
+  const [fixedPrices, setFixedPrices] = useState({});
+  const today = new Date().toISOString().split("T")[0];
+
+  // Load from record when it changes
+  useEffect(() => {
+    const catalog = user?.record?.serviceCatalog;
+    console.log(user)
+    console.log(catalog)
+
+    const flatPrices = {};
+    for (const group in catalog) {
+      catalog[group].forEach((item) => {
+        flatPrices[item.name] = item.price;
+      });
+    }
+
+    if (patientData && patientData.billing && Array.isArray(patientData.billing)) {
+      setPastInvoices(patientData.billing);
+
+    }
+    setServiceGroups(catalog);
+    setFixedPrices(flatPrices);
+    }, [patientData]);
     
     const addServiceRow = () => {
       setServices([
@@ -57,51 +43,62 @@ const BillingSection = () => {
     };
   
     const updateService = (index, key, value) => {
-      const updatedServices = [...services];
-      updatedServices[index][key] = value;
+      const updated = [...services];
+      updated[index][key] = value;
   
       if (key === "serviceGroup") {
-        updatedServices[index].serviceItem = "";
-        updatedServices[index].unitPrice = 0;
-        updatedServices[index].totalPrice = 0;
+        updated[index].serviceItem = "";
+        updated[index].unitPrice = 0;
+        updated[index].totalPrice = 0;
       }
   
       if (key === "serviceItem") {
-        updatedServices[index].unitPrice = fixedPrices[value] || 0;
-        updatedServices[index].totalPrice = updatedServices[index].unitPrice * updatedServices[index].quantity;
+        updated[index].unitPrice = fixedPrices[value] || 0;
+        updated[index].totalPrice = updated[index].unitPrice * updated[index].quantity;
       }
   
       if (key === "quantity") {
-        updatedServices[index].totalPrice = updatedServices[index].unitPrice * value;
+        updated[index].totalPrice = updated[index].unitPrice * value;
       }
   
-      setServices(updatedServices);
+      setServices(updated);
     };
   
     const calculateTotalBill = () => {
-      return services.reduce((sum, service) => sum + service.totalPrice, 0);
+      return services.reduce((sum, s) => sum + s.totalPrice, 0);
     };
     const validInvoice = services.filter(
       (s) => s.serviceGroup.trim() !== "" || s.serviceItem.trim() !== "" 
     );
-    const generateInvoicePDF = () => {
+    const generateInvoicePDF = async () => {
       const doc = new jsPDF();
+  
       // Invoice Header
       doc.setFontSize(16);
-      doc.text("CuraBlock Medical Invoice", 70, 20);
+      doc.setFont("helvetica", "bold");
+      doc.text(" Medical Invoice", 70, 24);
     
       let yPosition = 35;
       doc.setFontSize(12);
-      doc.text(`Patient Name: Dabrechi`, 20, yPosition);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("Full Name: ", 20, yPosition);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${patientData.name}`, 43, yPosition);
       yPosition += 8;
-      doc.text(`Medical ID: 123456789`, 20, yPosition);
+  
+  
+      doc.setFont("helvetica", "bold");
+      doc.text("Insurance Provider :", 20, yPosition);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${patientData.insuranceDetails.providerName}`, 63, yPosition);
       yPosition += 8;
-      doc.text(`Insurance Provider: MedPlus Insurance`, 20, yPosition);
-      yPosition += 8;
-      doc.text(`Insurance Plan: Platinum`, 20, yPosition);
-      yPosition += 8;
-      doc.text(`Insurance Number: P2345678`, 20, yPosition);
-      yPosition += 12;
+  
+      doc.setFont("helvetica", "bold");
+      doc.text("Insurance Number :", 20, yPosition);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${patientData.insuranceDetails.policyNumber}`, 62, yPosition);
+      yPosition += 20;
 
       // Invoice Number and Date
       doc.text(`Invoice #: ${invoiceNumber}`, 20, yPosition);
@@ -137,40 +134,56 @@ const BillingSection = () => {
     yPosition += 8;
 
    // Total Bill
-  const totalBill = calculateTotalBill();
-  doc.setFontSize(14);
-  doc.text(`Total Bill: $${totalBill}`, 20, yPosition);
+  let totalBill = calculateTotalBill();
+  let coverageBalance = patientData.insuranceDetails.coverageBalance || 0;
+  const coverageDetails = patientData.insuranceDetails.coverageDetails || []; 
 
-  // Payment Status (Paid or Pending)
-  const isPaid = Math.random() > 0.5; // Randomly decide payment status (for now)
-  const paymentStatus = isPaid ? "Paid" : "Pending";
-  
+  let insuranceCoveredAmount = 0;
 
-    // Save the PDF
-    const pdfName = `Invoice_${invoiceNumber}.pdf`;
-    doc.save(pdfName);
+// Deduct covered services from coverageBalance
+  validInvoice.forEach((service) => {
+    if (coverageDetails.includes(service.serviceGroup) && coverageBalance > 0) {
+      const coveredAmount = Math.min(service.totalPrice, coverageBalance);
+      insuranceCoveredAmount += coveredAmount;
+      coverageBalance -= coveredAmount;
+    }
+  });
 
-    // Store Past Invoices
-    setPastInvoices([
-      {  
-        fileName: pdfName, 
-        status: paymentStatus 
-      },...pastInvoices
-    ]);
-  
-    // Clear Invoice Fields
-    setServices([]);
-    setInvoiceNumber(invoiceNumber + 1);
-    setIsModalOpen(false);
+  const patientOwes = totalBill - insuranceCoveredAmount;
+  const paymentStatus = patientOwes <= 0 ? "Paid" : "Pending";
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(`Total Bill: $${totalBill.toFixed(2)}`, 130, yPosition);
+  yPosition += 8;
+  doc.text(`Insurance Covered: $${insuranceCoveredAmount.toFixed(2)}`, 130, yPosition);
+  yPosition += 8;
+  doc.text(`Amount Due: $${patientOwes.toFixed(2)}`, 130, yPosition);
+
+
+  const convertBlobToBase64 = (blob) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   };
-  
+
+    const filename = `Invoice_${invoiceNumber} [${today}]`;
+    const pdfBlob = doc.output('blob'); 
+    const file = await convertBlobToBase64(pdfBlob);
+    const status = paymentStatus 
+    return {filename, file, status, coverageBalance}
+    };
+    
+    
    
     return (
       <div>
-        {/* "Add New Bill" Button */}
         <div className="dashboard-card">
           <div className="card-header">
-            <button className="add-bill-btn" onClick={() => setIsModalOpen(true)}>
+            <button className="edit-toggle back-btn" onClick={() => setIsModalOpen(true)}>
               <FaPlus /> Add New Bill
             </button>
           </div>
@@ -179,12 +192,12 @@ const BillingSection = () => {
         {/* Billing Records List */}
         {pastInvoices.length > 0 ? (
           <div className="billing-list">
-            {pastInvoices.map((bill, index) => (
+            {[...pastInvoices].reverse().map((bill, index) => (
               <div key={index} className="dashboard-card">
                 <div className="card-header">
-                  <span>{bill.fileName}</span>
+                  <span>{bill.filename}</span>
                   <span className={`status-label ${bill.status.toLowerCase()}`}>{bill.status}</span>
-                  <button onClick={() => window.open(`/${bill.invoiceFile}.pdf`, "_blank")}>
+                  <button className="edit-toggle back-btn" onClick={() => handleViewDocument(patient, bill.file)}>
                     <FaFilePdf /> View Invoice
                   </button>
                 </div>
@@ -209,11 +222,11 @@ const BillingSection = () => {
             </tr>
           </thead>
           <tbody>
-            {services.map((service, index) => (
+            {services.map((s, index) => (
               <tr key={index}>
                 <td>
                   <select
-                    value={service.serviceGroup}
+                    value={s.serviceGroup}
                     onChange={(e) => updateService(index, "serviceGroup", e.target.value)}
                   >
                     <option value="">Select Group</option>
@@ -226,15 +239,15 @@ const BillingSection = () => {
                 </td>
                 <td>
                   <select
-                    value={service.serviceItem}
+                    value={s.serviceItem}
                     onChange={(e) => updateService(index, "serviceItem", e.target.value)}
-                    disabled={!service.serviceGroup}
+                    disabled={!s.serviceGroup}
                   >
                     <option value="">Select Service</option>
-                    {service.serviceGroup &&
-                      serviceGroups[service.serviceGroup].map((item) => (
-                        <option key={item} value={item}>
-                          {item}
+                    {s.serviceGroup &&
+                      serviceGroups[s.serviceGroup].map((item) => (
+                        <option key={item.name} value={item.name}>
+                          {item.name}
                         </option>
                       ))}
                   </select>
@@ -242,13 +255,13 @@ const BillingSection = () => {
                 <td>
                   <input
                     type="number"
-                    value={service.quantity}
+                    value={s.quantity}
                     onChange={(e) => updateService(index, "quantity", parseInt(e.target.value) || 1)}
                     min="1"
                   />
                 </td>
-                <td>${service.unitPrice}</td>
-                <td>${service.totalPrice}</td>
+                <td>${s.unitPrice}</td>
+                <td>${s.totalPrice}</td>
                 <td>
                   <button className="delete-btn" onClick={() => setServices(services.filter((_, i) => i !== index))}>
                     <FaTrash />
@@ -265,8 +278,14 @@ const BillingSection = () => {
 
         <h3>Total Bill: ${calculateTotalBill()}</h3>
 
-        <button className="save-btn" onClick={generateInvoicePDF} disabled={calculateTotalBill() === 0}  >
-          Save Invoice as PDF
+        <button className="save-btn" onClick={async () => {
+          const invoice = await generateInvoicePDF(); 
+          await handleUploadbill(user, patient, invoice, setPatientData);
+          setServices([]);
+          setInvoiceNumber(prev => prev + 1);
+          setIsModalOpen(false);
+        }} disabled={calculateTotalBill() === 0}  >
+          Save Invoice 
         </button>
         <button className="close-btn" onClick={() => setIsModalOpen(false)}>
           Close

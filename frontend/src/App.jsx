@@ -1,44 +1,52 @@
-import React, {} from 'react';
-import { BrowserRouter as Router, Route, Routes} from 'react-router-dom';
-// import './App.css'
+import React, {useState} from 'react';
+import { FaSignOutAlt } from 'react-icons/fa';
 
 import LandingPage from './pages/landingPage';
-import LoginPage from './pages/loginpage';
-import PatientPortal from './pages/patientPortal';
+import PatientPortal from "./pages/patientPortal";
 import DoctorPortal from './pages/doctorPortal';
-import Dashboard from "./components/patientDashboard";
-import Appointment from "./components/patientAppointment";
-import Record from "./components/patientRecords";
-import AccessManagement from "./components/patientAccessManagement";
-import AccountInformation from "./components/patientAccountInformation";
-import DoctorDashboard from './components/doctorDashboard';
-import DoctorPatientCenter from './components/doctorPatientCenter';
-import DoctorAppointmentCenter from './components/doctorAppointmentCenter';
+import NursePortal from './pages/nursePage';
+
 function App() {
+  const [user, setUser] = useState(null);
+  const [showText, setShowText] = useState(false);
+
+  const showHeader = user !== null && (user.role === "patient" || user.role === "doctor" || user.role === "nurse");
+
+  const handleLogout = async () => {
+    setUser(null); 
+  };
+
   return (
-    <Router>
-      <div className="app-container">
-        <header>CuraBlock</header>
-        <main className="">
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/patient-portal" element={<PatientPortal />}>
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="appointments" element={<Appointment />} />
-              <Route path="records" element={<Record />} />
-              <Route path="access-management" element={<AccessManagement />} />
-              <Route path="account" element={<AccountInformation />} />
-            </Route>
-            <Route path="/doctor-portal" element={<DoctorPortal />}>
-            <Route path="patient-center" element={<DoctorPatientCenter />} />
-              <Route path="dashboard" element={<DoctorDashboard />} />
-              <Route path="appointments" element={<DoctorAppointmentCenter />} />
-            </Route> 
-          </Routes>
-        </main>
-      </div>
-    </Router>
+    <div className="app-container">
+      {showHeader &&(
+        <header>
+          <h1 className='logo'> <img src='/logo.png'/>Curablock </h1>
+          <div
+          className="logout-container"
+          onMouseEnter={() => setShowText(true)}
+          onMouseLeave={() => setShowText(false)}
+          onClick={handleLogout}>
+          <FaSignOutAlt className='icon'/>
+          {showText && <span className="logout-text">Sign Out</span>}
+          </div>
+        </header>
+
+      )}
+ 
+      <main>
+        {user === null ? ( 
+          <LandingPage setUser={setUser} /> 
+        ) : user.role === "patient" ? (
+          <PatientPortal user={user} />
+        ) : user.role === "doctor" ? (
+          <DoctorPortal user={user} />
+        ): user.role === "nurse" ? (
+          <NursePortal user={user} />
+        ): (
+          <LandingPage setUser={setUser} /> 
+        )}
+      </main>
+    </div>
   );
 }
-export default App
+export default App;

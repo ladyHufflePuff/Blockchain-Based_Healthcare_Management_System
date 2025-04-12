@@ -1,26 +1,27 @@
 import React, { useState } from "react";
+import { FaEdit } from "react-icons/fa";
 import { jsPDF } from "jspdf";
 
-const MedicalRecordSection = () => {
+import { handleReportUpload } from "../services/authService";
+
+const MedicalRecordSection = ({patientData, patient, user, setPatientData }) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const [record, setRecord] = useState({
-    fullName: "John Doe",
-    sex: "Male",
-    dob: "01-01-1990",
-    emergencyContact: "Jane Doe",
-    emergencyPhone: "+1 234 567 890",
-    medicalId: "123456789",
-    insuranceProvider: "ABC Health Insurance",
-    insuranceNumber: "INS-987654321",
-    medicalHistory: [{ condition: "Diabetes", history: "Diagnosed in 2015", doctor: "Dr. Smith" }],
-    allergies: [],
-    medications: [{ name: "Metformin", dosage: "500mg", use: "Diabetes" }],
-    familyHistory: [{ relationship: "Father", sex: "Male", condition: "Hypertension" }],
-    generalPractitioner: { name: "Dr. Wilson", practice: "Downtown Clinic", contact: "+1 234 567 890" },
-    specialists: [{ name: "Dr. Brown", specialty: "Endocrinology", practice: "City Hospital", contact: "+1 234 987 654" }],
-    dentist: { name: "Dr. Parker", practice: "Smile Dental", contact: "+1 987 654 321" },
-    pharmacy: { name: "MediCare Pharmacy", address: "123 Main St, City", contact: "+1 456 789 012" },
+    fullName: patientData.name,
+    sex: patientData.gender,
+    dob: patientData.dob,
+    emergencyContact: patientData.emergencyContact ? patientData.emergencyContact.name : '',
+    emergencyPhone: patientData.emergencyContact ? patientData.emergencyContact.contact : '',
+    insuranceProvider: patientData.insuranceDetails ? patientData.insuranceDetails.providerName : '',
+    insuranceNumber: patientData.insuranceDetails ? patientData.insuranceDetails.policyNumber : '',
+    medicalHistory: patientData.medicalHistory || [],
+    allergies:patientData.allergies || [],
+    medications: patientData.medications || [],
+    familyHistory:patientData.familyHistory || [],
+    generalPractitioner: patientData.generalPractitioner || {},
+    specialists: patientData.specialists || [],
+    dentist: patientData.dentist || {},
   });
 
   const handleAddRow = (field) => {
@@ -49,20 +50,32 @@ const MedicalRecordSection = () => {
     setRecord({ ...record, [field]: updatedRecords });
   };
 
-  const handleSave = () => {
+  const handleSave = async()  => {
     const cleanRecord = {
         ...record,
-        medicalHistory: record.medicalHistory.filter((row) => row.condition.trim() && row.history.trim() && row.doctor.trim()),
+        medicalHistory: record.medicalHistory.filter((row) => row.condition.trim() && row.history.trim() && row.diagnosedBy.trim()),
         allergies: record.allergies.filter((row) => row.allergy.trim()),
-        medications: record.medications.filter((row) => row.name.trim() && row.dosage.trim() && row.use.trim()),
-        familyHistory: record.familyHistory.filter((row) => row.relationship.trim() && row.sex.trim() && row.condition.trim()),
+        medications: record.medications.filter((row) => row.dosage.trim() && row.use.trim() && row.use.trim()),
+        familyHistory: record.familyHistory.filter((row) => row.relationship.trim() && row.gender.trim() && row.medicalCondition.trim()),
         specialists: record.specialists.filter((row) => row.name.trim() && row.specialty.trim() && row.practice.trim() && row.contact.trim()),
+      };
+
+      const convertBlobToBase64 = (blob) => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
       };
   
       setRecord(cleanRecord);
       setIsEditing(false);
-      handleSaveAsPDF(cleanRecord);
+      const pdfBlob = handleSaveAsPDF(cleanRecord);
+      const base64Pdf =  await convertBlobToBase64(pdfBlob);
+      handleReportUpload( user, patient, base64Pdf, record, setPatientData)
     };
+
   // Save as PDF
   const handleSaveAsPDF = (cleanRecord) => {
     const doc = new jsPDF();
@@ -72,10 +85,10 @@ const MedicalRecordSection = () => {
     const addHeader = () => {
         doc.setFontSize(16);
         doc.setFont("helvetica", "bold");
-        doc.text("CuraBlock Medical Summary", 60, 20);
+        doc.text(" Medical Summary", 70, 24);
         doc.setFontSize(12);
         doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 150, 10);
-        y = 30; // Reset y position after header
+        y = 30; 
       };
     
       // Function to add footer
@@ -121,12 +134,6 @@ const MedicalRecordSection = () => {
     y += 8;
 
     doc.setFont("helvetica", "bold");
-    doc.text("Medical Identification Number :", 10, y);
-    doc.setFont("helvetica", "normal");
-    doc.text(cleanRecord.medicalId,  75, y);
-    y += 8;
-
-    doc.setFont("helvetica", "bold");
     doc.text("Insurance Provider :", 10, y);
     doc.setFont("helvetica", "normal");
     doc.text(cleanRecord.insuranceProvider, 55, y);
@@ -161,8 +168,8 @@ const MedicalRecordSection = () => {
       cleanRecord.medicalHistory.forEach((item) => {
         doc.text(item.condition, 10, y, { maxWidth: 35 });
         doc.text(item.history, 60, y, { maxWidth: 70} );
-        doc.text(item.doctor, 140, y, { maxWidth: 50 });
-        y += 8;
+        doc.text(item.diagnosedBy, 140, y, { maxWidth: 50 });
+        y += 15;
         checkPageBreak();
       });
       doc.line(10, y, 200, y); 
@@ -196,7 +203,7 @@ const MedicalRecordSection = () => {
       cleanRecord.allergies.forEach((item) => {
         doc.text(item.allergy, 10, y, { maxWidth: 35 });
         doc.text(item.severity, 60, y, { maxWidth: 70} );
-        doc.text(item.doctor, 140, y, { maxWidth: 50 });
+        doc.text(item.diagnosedBy, 140, y, { maxWidth: 50 });
         y += 8;
         checkPageBreak();
       });
@@ -265,8 +272,8 @@ const MedicalRecordSection = () => {
       doc.setFont("helvetica", "normal"); // Reset font for data rows
       cleanRecord.familyHistory.forEach((item) => {
         doc.text(item.relationship, 10, y, { maxWidth: 35 });
-        doc.text(item.sex, 60, y, { maxWidth: 70} );
-        doc.text(item.condition, 140, y, { maxWidth: 50 });
+        doc.text(item.gender, 60, y, { maxWidth: 70} );
+        doc.text(item.medicalCondition, 140, y, { maxWidth: 50 });
         y += 8;
         checkPageBreak();
       });
@@ -338,32 +345,23 @@ const MedicalRecordSection = () => {
     doc.text(`Name: ${cleanRecord.dentist.contact}`,  10, y);
     checkPageBreak();
 
-    y += 15;
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text("Preferred pharmacy", 10, y);
-    y += 10;
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Name: ${cleanRecord.pharmacy.name}`,  10, y);
-    y += 8;
-    checkPageBreak();
-    doc.text(`Practice: ${cleanRecord.pharmacy.address}`,  10, y);
-    y += 8;
-    checkPageBreak();
-    doc.text(`Name: ${cleanRecord.pharmacy.contact}`,  10, y);
-    checkPageBreak();
-
     addFooter();
-    doc.save("Medical_Summary.pdf");
+    return doc.output('blob');
   };
 
 
+
   return (
-    <div>
-      <button onClick={() => setIsEditing(!isEditing)}>{isEditing ? "Cancel" : "Edit"}</button>
+    <div className="record">
+      <button onClick={() => setIsEditing(!isEditing)}
+        className="edit-toggle">
+        {isEditing ?(
+           <span className="cancel-text">Cancel</span>
+         ) :( <span className="edit-icon"><FaEdit /> Edit</span>
+        )}
+          </button>
       
-      {isEditing && <button onClick={handleSave}>Save Changes</button>}
+      {isEditing && <button className="edit-toggle" onClick={handleSave}>Save Changes</button>}
 
       <div>
         <h3>Patient Information</h3>
@@ -372,7 +370,7 @@ const MedicalRecordSection = () => {
             <p><strong>Sex:</strong> {record.sex}</p>
             <p><strong>Date of Birth:</strong> {record.dob}</p>
             <p><strong>Emergency Contact:</strong> {record.emergencyContact} ({record.emergencyPhone})</p>
-            <p><strong>Medical ID:</strong> {record.medicalId}</p>
+          
             <p><strong>Insurance Provider:</strong> {record.insuranceProvider}</p>
             <p><strong>Insurance Number:</strong> {record.insuranceNumber}</p>
         </div>
@@ -388,13 +386,13 @@ const MedicalRecordSection = () => {
               <tr key={index}>
               <td>{isEditing ? <input type="text" value={entry.condition} onChange={(e) => handleInputChange("medicalHistory", index, "condition", e.target.value)} /> : entry.condition}</td>
               <td>{isEditing ? <input type="text" value={entry.history} onChange={(e) => handleInputChange("medicalHistory", index, "history", e.target.value)} /> : entry.history}</td>
-              <td>{isEditing ? <input type="text" value={entry.doctor} onChange={(e) => handleInputChange("medicalHistory", index, "doctor", e.target.value)} /> : entry.doctor}</td>
+              <td>{isEditing ? <input type="text" value={entry.diagnosedBy} onChange={(e) => handleInputChange("medicalHistory", index, "doctor", e.target.value)} /> : entry.diagnosedBy}</td>
             </tr>
             ))}
           </tbody>
         </table>
       )}
-      {isEditing && <button onClick={() => handleAddRow("medicalHistory", { condition: "", history: "", doctor: "" })}>Add Condition</button>}
+      {isEditing && <button onClick={() => handleAddRow("medicalHistory", { condition: "", history: "", diagnosedBy: "" })}>Add Condition</button>}
 
         <h3>Allergies</h3>
         {record.allergies.length === 0 ? (
@@ -407,13 +405,13 @@ const MedicalRecordSection = () => {
               <tr key={index}>
               <td>{isEditing ? <input type="text" value={entry.allergy} onChange={(e) => handleInputChange("allergies", index, "allergy", e.target.value)} /> : entry.allergy}</td>
               <td>{isEditing ? <input type="text" value={entry.severity} onChange={(e) => handleInputChange("allergies", index, "severity", e.target.value)} /> : entry.severity}</td>
-              <td>{isEditing ? <input type="text" value={entry.doctor} onChange={(e) => handleInputChange("allergies", index, "doctor", e.target.value)} /> : entry.doctor}</td>
+              <td>{isEditing ? <input type="text" value={entry.diagnosedBy} onChange={(e) => handleInputChange("allergies", index, "doctor", e.target.value)} /> : entry.diagnosedBy}</td>
             </tr>
             ))}
           </tbody>
         </table>
       )}
-      {isEditing && <button onClick={() => handleAddRow("allergies", { allergy: "", severity: "", doctor: "" })}>Add Allergy</button>}
+      {isEditing && <button onClick={() => handleAddRow("allergies", { allergy: "", severity: "", diagnosedBy: "" })}>Add Allergy</button>}
         <h3>Medications</h3>
 
         {record.medications.length === 0 ? (
@@ -432,7 +430,7 @@ const MedicalRecordSection = () => {
           </tbody>
         </table>
       )}
-      {isEditing && <button onClick={() => handleAddRow("medications", { name: "", dosage: "", use: "" })}>Medication</button>}
+      {isEditing && <button onClick={() => handleAddRow("medications", { name: "", dosage: "", use: "" })}> Add Medication</button>}
 
         <h3>Family History</h3>
         {record.familyHistory.length === 0 ? (
@@ -444,14 +442,14 @@ const MedicalRecordSection = () => {
             {record.familyHistory.map((entry, index) => (
               <tr key={index}>
               <td>{isEditing ? <input type="text" value={entry.relationship} onChange={(e) => handleInputChange("familyHistory", index, "relationship", e.target.value)} /> : entry.relationship}</td>
-              <td>{isEditing ? <input type="text" value={entry.sex} onChange={(e) => handleInputChange("familyHistory", index, "sex", e.target.value)} /> : entry.sex}</td>
-              <td>{isEditing ? <input type="text" value={entry.condition} onChange={(e) => handleInputChange("familyHistory", index, "condition", e.target.value)} /> : entry.condition}</td>
+              <td>{isEditing ? <input type="text" value={entry.gender} onChange={(e) => handleInputChange("familyHistory", index, "sex", e.target.value)} /> : entry.gender}</td>
+              <td>{isEditing ? <input type="text" value={entry.medicalCondition} onChange={(e) => handleInputChange("familyHistory", index, "condition", e.target.value)} /> : entry.medicalCondition}</td>
             </tr>
             ))}
           </tbody>
         </table>
       )}
-      {isEditing && <button onClick={() => handleAddRow("familyHistory", { relationship: "", sex: "", condition: "" })}>Add Family History</button>}
+      {isEditing && <button onClick={() => handleAddRow("familyHistory", { relationship: "", gender: "", medicalCondition: "" })}>Add Family History</button>}
         
         <h5><u>General Practitioner</u></h5>
         <p>Name: {record.generalPractitioner.name}</p>
@@ -472,14 +470,6 @@ const MedicalRecordSection = () => {
         <p>Name: {record.dentist.name}</p>
         <p>Practice: {record.dentist.practice}</p>
         <p>Contact: {record.dentist.contact}</p>
-        <h5><u>Preferred Pharmacy</u></h5>
-        <p>Name: {record.pharmacy.name}</p>
-        <p>Address: {record.pharmacy.address}</p>
-        <p>Contact: {record.pharmacy.contact}</p>
-
-
-        
-
       </div>
     </div>
   );
