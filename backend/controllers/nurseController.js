@@ -61,7 +61,7 @@ export const registerNurse = async (req, res) => {
 
 export const postConsultation = async(req, res) =>{
     const { doctor, patient, bloodPressure,  heartRate, temperature, weight, height} = req.body;
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString("en-CA");
   
   try {
     const doctorResponse = await axios.post(`${fireflyApiUrl}/namespaces/default/apis/identity_management/query/getIdentity`, {
@@ -90,7 +90,7 @@ export const postConsultation = async(req, res) =>{
     res.status(200).json({ message: 'Consultation posted successfully' });
   } catch (error) {
     console.error('Error posting consultation:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    res.status(500).json({ message: 'Error posting consultation' });
   }
 };
 

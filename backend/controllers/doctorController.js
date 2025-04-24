@@ -168,7 +168,7 @@ export const uploadTestResults = async(req,res) =>{
         updatedPatientData: patientData
        });
     } catch (err) {
-      console.error('Error granting access:', err);
+      console.error('Error uploading test results:', err);
       res.status(500).json({ error: 'Server error while uploading test result' });
     }
 
@@ -228,7 +228,7 @@ export const uploadBill = async(req,res) =>{
 
 export const uploadConsultation = async(req,res) =>{
   const { patientDid, doctorDid, base64Pdf, prescription } = req.body;
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString("en-CA");
    
   try {
       const patientResponse = await axios.post(`${fireflyApiUrl}/namespaces/default/apis/identity_management/query/getIdentity`, {
@@ -388,12 +388,12 @@ export const deleteAppointment = async(req,res) =>{
       });
    
       res.status(200).json({
-        message: `Consultation uploaded successfully`,
+        message: `Appointment deleted successfully`,
         updatedDoctorData: doctorData
        });
     } catch (err) {
-      console.error('Error uploading consultation:', err);
-      res.status(500).json({ error: 'Server error while uploading record' });
+      console.error('Error deleting appointment:', err);
+      res.status(500).json({ error: 'Server error while updating record' });
     }
 }
 

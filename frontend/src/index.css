@@ -1,5 +1,5 @@
 html, body {
-  overflow: hidden;
+  /* overflow: hidden; */
   font-family: 'Playfair Display', serif;
   background-color:  #e8ebe0;
 }
@@ -693,3 +693,109 @@ header h1 img {
 .edit-icon {
   font-size: 16px;
 }
+
+.patient-schedule{
+  display: flex;
+}
+
+.patient-schedule-grid {
+  display: flex;
+  flex-direction: column;
+  overflow-x: auto;
+  background-color: #387b110f;
+  gap: 8px;
+  
+}
+
+.grid-header{
+  display: grid;
+  grid-template-columns: 300px repeat(13, 65px);
+}
+
+.grid-row {
+  display: grid;
+  grid-template-columns: 300px repeat(13, 65px);
+  max-height: 220px;
+}
+
+.grid-cell {
+  padding: 5px;
+  text-align: center;
+  border: 1px solid #ccc; /* Grid lines */
+  box-sizing: border-box;
+}
+
+.header-cell {
+  font-weight: bold;
+  max-height: 35px;
+}
+
+.patient-info-cell {
+  background: #12140824;
+  display: flex;
+}
+
+.schedule-cell {
+  background-color: white;
+  border: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+}
+
+.info {
+  display: flex;
+  flex: 5;
+  flex-direction: column;
+ 
+}
+.lvl1 {
+  display: flex;
+}
+
+.patient-details-text {
+  text-align: left;
+  padding: 5px;
+  font-size: 0.75rem;
+  color: #414040;
+}
+.patient-details-text p {
+  margin: 0;
+  line-height: 2;
+}
+
+
+.icons {
+  display: flex;
+  flex: 2;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  border-left:  2px solid #ccc;
+}
+.icon-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #333;
+}
+
+.icon-wrapper svg {
+  font-size: 1.2rem;
+  margin-bottom: 0.25rem;
+  color: #555;
+}
+
+.prn-icon svg {
+  color: gray;
+  transition: color 0.3s ease;
+}
+
+.prn-icon.active svg {
+  color: goldenrod;
+}
+
+

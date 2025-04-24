@@ -19,7 +19,8 @@ const AccountInformation = () => {
           
           <p><strong>Insurance Provider:</strong> {patientRecord?.insuranceDetails.providerName}</p>
           <p><strong>Insurance Number:</strong> {patientRecord?.insuranceDetails.policyNumber}</p>
-          <p><strong>Insurance Expiry Date:</strong> {patientRecord?.insuranceDetails.policyExpiryDate}</p>       
+          <p><strong>Insurance Expiry Date:</strong> {patientRecord?.insuranceDetails.policyExpiryDate}</p>  
+          <p><strong>Insurance Coverage Balance:</strong> ${patientRecord?.insuranceDetails.coverageBalance}</p>         
         </div>
       </div>
     </div>

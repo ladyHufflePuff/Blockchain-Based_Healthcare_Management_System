@@ -1,8 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
 import PostConsultation from "../components/outPatient";
-import DoctorPatientCenter from "../components/doctorPatientCenter";
-import DoctorAppointmentCenter from "../components/doctorAppointmentCenter";
+import DisplayPatientSchedule from "../components/nurseIn-Patient";
 
 const NurseContext = createContext();
 
@@ -24,12 +23,10 @@ const NursePortal = ({user}) => {
     switch (activeComponent) {
       case "out-patient":
         return <PostConsultation/>;
-      case "patient-center":
-        return <DoctorPatientCenter />;
-      case "appointments":
-        return <DoctorAppointmentCenter/>;
+      case "in-patient":
+        return <DisplayPatientSchedule/>;
       default:
-        return <PostConsultation />;
+        return <PostConsultation/>;
     }
   };
 
@@ -47,7 +44,7 @@ const NursePortal = ({user}) => {
             <button className={activeComponent=== "out-patient" ? "active" : ""} onClick={() => setActiveComponent("out-patient")}
             > Out-Patient
             </button>
-            <button className={activeComponent === "patient-center" ? "active" : ""} onClick={() => setActiveComponent("patient-center")}
+            <button className={activeComponent === "in-patient" ? "active" : ""} onClick={() => setActiveComponent("in-patient")}
             > In-Patient
             </button>
           </nav>

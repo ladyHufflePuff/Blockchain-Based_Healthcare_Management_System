@@ -1,7 +1,7 @@
-import { useState, useEffect} from "react";
+import React, { useState, useEffect} from "react";
 
 import { fetchRecord, postVitals } from "../services/authService";
-import {useNurse } from "../pages/nursePage";
+import { useNurse } from "../pages/nursePage";
 
 const PostConsultation = () => {
     const { user, nurseRecord } = useNurse();
@@ -19,7 +19,9 @@ const PostConsultation = () => {
 
     useEffect(() => {
         const fetchDoctorDetails = async () => {
-          if (nurseRecord?.avaliableDoctors && Array.isArray(nurseRecord?.avaliableDoctors) && !hasFetched) {
+          if (nurseRecord?.avaliableDoctors && 
+            Array.isArray(nurseRecord?.avaliableDoctors) && 
+            !hasFetched) {
             const fetchedDoctors = await Promise.all(
               nurseRecord?.avaliableDoctors.map(async (doctorObj) => {
                 try {
@@ -28,6 +30,7 @@ const PostConsultation = () => {
                     did: doctorObj.did,
                     name: doctorData.name || "Unknown",
                     specialty: doctorData.specialty || "General",
+                    consultations: doctorData.consultations || []
                   };
                 } catch (error) {
                   console.error(`Failed to fetch doctor with DID ${doctorObj.did}`, error);
@@ -72,6 +75,8 @@ const PostConsultation = () => {
           alert("Failed to post vitals.");
         }
       };
+
+    
       
    
       return (
@@ -132,9 +137,6 @@ const PostConsultation = () => {
                     <button type="submit" className="postButton" disabled={!isFormValid()}>Post Patient</button>
                 </div>
             </form>
-            </div>
-            <div className="info-card">
-            <h2>Doctor Activity</h2>
             </div>
         </div>
       );

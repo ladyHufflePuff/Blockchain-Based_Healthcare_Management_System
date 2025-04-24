@@ -239,14 +239,6 @@ export const postVitals = async (formData, setFormData) => {
 };
 
 
-
-
-
-
-
-
-
-
 export const fetchDoctors = async (hospital, setDoctors) =>{
   try { 
       const response = await axios.get(`http://localhost:8080/doctors/${hospital}`);

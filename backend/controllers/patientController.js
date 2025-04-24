@@ -108,7 +108,6 @@ export const handleAppointmentRequest = async (req, res) => {
 
     const patientData = identityRes.data.record; 
 
-    
 
     patientData.appointmentRequests = patientData.appointmentRequests.filter(
       (appt) => JSON.stringify(appt) !== JSON.stringify(appointment)
@@ -261,7 +260,7 @@ export const grantAccess = async (req, res) => {
      });
   } catch (err) {
     console.error('Error granting access:', err);
-    res.status(500).json({ error: 'Server error while granting access' });
+    res.status(500).json({ error: 'Invalid DID' });
   }
 };
 
