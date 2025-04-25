@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { usePatient } from "../pages/patientPortal";
-import { fetchRecord, handleAccessManagement } from "../services/authService";
+import { usePatient } from "../../pages/patientPortal";
+import { fetchRecord, handleAccessManagement } from "../../client";
 
 const AccessManagement = () => {
   const { patientRecord, setPatientRecord, user } = usePatient();
@@ -11,11 +11,12 @@ const AccessManagement = () => {
   useEffect(() => {
     if (patientRecord) {
       const mapAccessRecords = async () => {
-        if (!patientRecord || !patientRecord.accessControl) return;
+        if (!patientRecord?.accessControl) return;
 
         const current = [];
         const history = [];
 
+        // Iterate over accessControl entries to categorize current vs revoked access
         for (const record of patientRecord.accessControl) {
           try {
             const identity = await fetchRecord(record.provider);
@@ -53,6 +54,7 @@ const AccessManagement = () => {
 
   return (
     <div>
+      {/* Tab buttons */}
       <div className="tabs">
         <button
           className={`tab ${activeTab === "current" ? "active" : ""}`}
@@ -68,6 +70,7 @@ const AccessManagement = () => {
         </button>
       </div>
 
+      {/* Current Access View */}
       {activeTab === "current" && (
         <div>
           <div className="item-header">
@@ -75,8 +78,9 @@ const AccessManagement = () => {
             <span className="date-col">Date Granted</span>
             <span className="action-col"></span>
           </div>
+
           {currentAccess.length === 0 ? (
-            <div>No current access </div> 
+            <div>No current access</div>
           ) : (
             currentAccess.map((access, index) => (
               <div className="dashboard-card" key={index}>
@@ -85,7 +89,9 @@ const AccessManagement = () => {
                   <span className="date-col">{access.dateGranted}</span>
                   <span className="button-item">
                     <button
-                      onClick={() => handleAccessManagement(user, access.did, setPatientRecord)}
+                      onClick={() =>
+                        handleAccessManagement(user, access.did, setPatientRecord)
+                      }
                       className="revoke-btn"
                     >
                       Revoke
@@ -98,6 +104,7 @@ const AccessManagement = () => {
         </div>
       )}
 
+      {/* Access History View */}
       {activeTab === "history" && (
         <div>
           <div className="item-header">
@@ -105,8 +112,9 @@ const AccessManagement = () => {
             <span className="date-col">Date Granted</span>
             <span className="date-col">Date Revoked</span>
           </div>
+
           {accessHistory.length === 0 ? (
-            <div>No access history</div> 
+            <div>No access history</div>
           ) : (
             accessHistory.map((history, index) => (
               <div className="dashboard-card" key={index}>

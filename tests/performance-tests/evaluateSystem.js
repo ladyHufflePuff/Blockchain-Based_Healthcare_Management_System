@@ -75,13 +75,13 @@ const evaluateSystem = async () => {
 
     // SUMMARY
     console.log("=== Evaluation Summary ===");
-    console.log("Security & Privacy: ✅ Role-based access tested with DID");
-    console.log("Usability: ✅ Simple mnemonic login + file upload");
+    console.log("Security & Privacy: Role-based access tested with DID");
+    console.log("Usability: Simple mnemonic login + file upload");
     console.log("Scalability & Performance:");
     console.log(` - Blockchain fetch: ${(t6 - t5).toFixed(2)} ms`);
     console.log(` - IPFS upload: ${(t8 - t7).toFixed(2)} ms`);
     console.log(` - IPFS fetch: ${(t10 - t9).toFixed(2)} ms`);
-    console.log("Auditability: ✅ Events can be traced via FireFly logs");
+    console.log("Auditability: Events can be traced via FireFly logs");
 
   } catch (err) {
     console.error("Evaluation failed:", err.message);

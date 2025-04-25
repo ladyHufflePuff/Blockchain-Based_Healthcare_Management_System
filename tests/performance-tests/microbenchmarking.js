@@ -2,38 +2,44 @@ import axios from 'axios';
 import fs from 'fs';
 import { performance } from 'perf_hooks';
 
-const testMnemonic = "six rough metal brain behave differ view infant horse empty chapter trick";;
+// Test credentials and data used across benchmarking calls
+const testMnemonic = "six rough metal brain behave differ view infant horse empty chapter trick";
 const doctorDid = "did:65cb0849-7439-42cf-a745-e2af35dce52e";
 const testFile = fs.readFileSync('base64Output.txt', 'utf8').trim();
 const patientDid = "did:c9d78a30-0d71-467b-bcfb-9a6dc92499f4";
 
 const encryptedCID = {
-  "encryptedData": "76c3d8675f44557fa80368058525d110b84a1d55409adbc68db30b3bc22e6bbb44c4f0adb203bb8d8296a41e14f61e3e",
-  "iv": "73b57905e32b5f0270b7364143b5436d"
+  encryptedData: "76c3d8675f44557fa80368058525d110b84a1d55409adbc68db30b3bc22e6bbb44c4f0adb203bb8d8296a41e14f61e3e",
+  iv: "73b57905e32b5f0270b7364143b5436d"
 };
 
+/**
+ * Executes a single iteration of all benchmarking operations.
+ * Measures time taken for each key API endpoint involved in core functionality.
+ * @returns {Object} result timings per action
+ */
 const runOnce = async () => {
   const results = {};
 
-  // LOGIN
+  // Measure login time
   const t1 = performance.now();
   await axios.post("http://localhost:8080/getRecord", { mnemonic: testMnemonic });
   const t2 = performance.now();
   results.login = t2 - t1;
 
-  // GRANT ACCESS
+  // Measure grant access time
   const t3 = performance.now();
   await axios.post("http://localhost:8080/grantAccess", { patientDid, doctorDid });
   const t4 = performance.now();
   results.grantAccess = t4 - t3;
 
-  // FETCH RECORD
+  // Measure blockchain record fetch time
   const t5 = performance.now();
   await axios.post("http://localhost:8080/fetchRecord", { did: patientDid });
   const t6 = performance.now();
   results.blockchainFetch = t6 - t5;
 
-  // UPLOAD RECORD
+  // Measure IPFS health record upload
   const t7 = performance.now();
   await axios.post("http://localhost:8080/uploadHealthRecord", {
     patientDid,
@@ -44,13 +50,13 @@ const runOnce = async () => {
   const t8 = performance.now();
   results.ipfsUpload = t8 - t7;
 
-  // FETCH DOCUMENT
+  // Measure document retrieval (IPFS fetch)
   const t9 = performance.now();
   await axios.post("http://localhost:8080/viewDocument", { patientDid, encryptedCID });
   const t10 = performance.now();
   results.ipfsFetch = t10 - t9;
 
-  // POST CONSULTATION
+  // Measure consultation posting time
   const consultation = {
     doctor: doctorDid,
     patient: patientDid,
@@ -60,7 +66,6 @@ const runOnce = async () => {
     weight: "70",
     height: "170",
   };
-
   const t11 = performance.now();
   await axios.post("http://localhost:8080/postConsultation", consultation);
   const t12 = performance.now();
@@ -69,10 +74,15 @@ const runOnce = async () => {
   return results;
 };
 
+// Helper functions for computing performance statistics
 const average = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
 const min = arr => Math.min(...arr);
 const max = arr => Math.max(...arr);
 
+/**
+ * Runs multiple benchmarking iterations and logs statistical summaries.
+ * @param {number} iterations - Number of times to repeat benchmarking
+ */
 const runEvaluation = async (iterations = 10) => {
   console.log("=== CuraBlock Performance Evaluation Started ===\n");
   const allResults = [];
@@ -100,7 +110,7 @@ const runEvaluation = async (iterations = 10) => {
 
   console.log("\n=== Evaluation Summary ===");
   console.table(stats);
-
 };
 
-runEvaluation(10); 
+// Start evaluation
+runEvaluation(10);

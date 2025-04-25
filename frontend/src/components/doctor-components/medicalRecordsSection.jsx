@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { FaEdit } from "react-icons/fa";
 import { jsPDF } from "jspdf";
 
-import { handleReportUpload } from "../services/authService";
+import { handleReportUpload } from "../client";
 
 const MedicalRecordSection = ({patientData, patient, user, setPatientData }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -76,7 +76,7 @@ const MedicalRecordSection = ({patientData, patient, user, setPatientData }) => 
       handleReportUpload( user, patient, base64Pdf, record, setPatientData)
     };
 
-  // Save as PDF
+ // Generate PDF document from patient data
   const handleSaveAsPDF = (cleanRecord) => {
     const doc = new jsPDF();
     let y = 20;

@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { usePatient } from "../pages/patientPortal";
-import { handleAppointmentManagement } from "../services/authService";
+import { usePatient } from "../../pages/patientPortal";
+import { handleAppointmentManagement } from "../../client";
 
 const Appointment = () => {
-  const { patientRecord,setPatientRecord, user } = usePatient();
+  const { patientRecord, setPatientRecord, user } = usePatient();
+
   const [activeTab, setActiveTab] = useState("requests");
   const [expandedIndex, setExpandedIndex] = useState(null);
   const [appointmentRequests, setAppointmentRequests] = useState([]);
@@ -12,24 +13,28 @@ const Appointment = () => {
   const today = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
-    if (patientRecord ) {
+    if (patientRecord) {
+      // Load appointment requests from record
       setAppointmentRequests(patientRecord.appointmentRequests || []);
 
+      // Filter and sort past appointments
       const pastAppointments = (patientRecord.appointments || [])
-      .filter((appt) => {
-        const apptDate = new Date(appt.date).toISOString().split("T")[0];
-        return apptDate < today;
-      })
-      .sort((a, b) => new Date(b.date) - new Date(a.date));
+        .filter((appt) => {
+          const apptDate = new Date(appt.date).toISOString().split("T")[0];
+          return apptDate < today;
+        })
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    setAppointmentHistory(pastAppointments);
+      setAppointmentHistory(pastAppointments);
     }
   }, [patientRecord]);
 
+  // Toggle visibility of details
   const toggleDetails = (index) => {
     setExpandedIndex(expandedIndex === index ? null : index);
   };
 
+  // Handle tab switching and reset expanded section
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setExpandedIndex(null);
@@ -37,6 +42,7 @@ const Appointment = () => {
 
   return (
     <div>
+      {/* Tab controls */}
       <div className="tabs">
         <button
           className={`tab ${activeTab === "requests" ? "active" : ""}`}
@@ -52,12 +58,14 @@ const Appointment = () => {
         </button>
       </div>
 
+      {/* Tab content area */}
       <div
         className={`appointments-content ${
           activeTab === "requests" ? "requests-grid" : "history-list"
         }`}
       >
         {activeTab === "requests" ? (
+          // Show pending appointment requests
           appointmentRequests.length > 0 ? (
             appointmentRequests.map((appt, index) => (
               <div className="appointment-card" key={index}>
@@ -72,13 +80,23 @@ const Appointment = () => {
                   </div>
                 </div>
                 <p className="appointment-notes">{appt.description}</p>
+
+                {/* Accept/Decline buttons */}
                 <div className="btns">
                   <button
-                  onClick={() => handleAppointmentManagement(user, appt, "accept", setPatientRecord)}
-                  >Accept</button>
+                    onClick={() =>
+                      handleAppointmentManagement(user, appt, "accept", setPatientRecord)
+                    }
+                  >
+                    Accept
+                  </button>
                   <button
-                  onClick={() => handleAppointmentManagement(user, appt, "decline",setPatientRecord)}
-                  >Decline</button>
+                    onClick={() =>
+                      handleAppointmentManagement(user, appt, "decline", setPatientRecord)
+                    }
+                  >
+                    Decline
+                  </button>
                 </div>
               </div>
             ))
@@ -86,6 +104,7 @@ const Appointment = () => {
             <p>No appointment requests available.</p>
           )
         ) : appointmentHistory.length > 0 ? (
+          // Show past confirmed appointments
           appointmentHistory.map((appt, index) => (
             <div className="dashboard-card" key={index}>
               <div className="card-header">

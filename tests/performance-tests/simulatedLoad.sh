@@ -1,6 +1,6 @@
-i wan tthis to stop after 10 mins #!/bin/bash
+#!/bin/bash
 
-# Number of concurrent users (adjust as needed)
+
 CONCURRENT_USERS=100
 
 # Function that simulates one user loop
